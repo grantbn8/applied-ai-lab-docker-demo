@@ -6,7 +6,8 @@ scanner=ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c
 mode=${1:-history}
 revision=${2:---all}
 files=$(mktemp)
-trap 'rm -f "$files"' EXIT
+snapshot=''
+trap 'rm -f "$files"; if [[ -n "$snapshot" ]]; then rm -rf "$snapshot"; fi' EXIT
 case "$mode" in
   staged) git diff --cached --name-only --diff-filter=ACMR -z > "$files" ;;
   history)
@@ -31,12 +32,17 @@ done < "$files"
 export MSYS_NO_PATHCONV=1
 root=$(pwd -P)
 if command -v cygpath >/dev/null; then root=$(cygpath -w "$root"); fi
-args=(git /repo --redact=100 --no-banner --ignore-gitleaks-allow --gitleaks-ignore-path /dev/null)
+# Export the actual index: Git hooks may use a temporary GIT_INDEX_FILE which
+# is visible to host Git but not to Git inside the scanner container.
+common=(--redact=100 --no-banner --ignore-gitleaks-allow --gitleaks-ignore-path /dev/null)
 if [[ "$mode" == staged ]]; then
-  args+=(--pre-commit --staged)
+  snapshot=$(mktemp -d)
+  git checkout-index --all --prefix="$snapshot/"
+  scan_root="$snapshot"
+  if command -v cygpath >/dev/null; then scan_root=$(cygpath -w "$snapshot"); fi
+  docker run --rm --network none -v "$scan_root:/scan:ro" -v "$root/.gitleaks.toml:/config.toml:ro" \
+    "$scanner" dir /scan --config /config.toml "${common[@]}"
 else
-  args+=(--log-opts="$revision")
+  docker run --rm --network none -v "$root:/repo:ro" \
+    "$scanner" git /repo --log-opts="$revision" "${common[@]}"
 fi
-# Read-only mount and no network access while scanning. Missing image may be pulled
-# by Docker first; any download, engine, or scanner error blocks the operation.
-docker run --rm --network none -v "$root:/repo:ro" "$scanner" "${args[@]}"

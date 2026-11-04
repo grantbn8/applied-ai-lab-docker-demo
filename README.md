@@ -331,3 +331,25 @@ that test database. Never point them at the database containing your class chats
 The November 5, 2026 classroom starting point is release **v0.1.0**. Use its tag
 when you need the exact demonstrated version. Normal development continues on
 `dev`; tested changes reach `main` through a pull request.
+
+
+## Student work and upstream notifications
+
+This upstream repository distributes the classroom example. Do your work and run
+Actions in **your own fork**; do not open upstream PRs or submit assignments here.
+Cloning, forking, and pushes to your fork do not run this upstream's CI.
+
+Upstream CI runs only on main/dev pushes, authorized manual runs, and the release
+workflow. It intentionally has no pull-request, issue, comment, or fork trigger.
+The owner's dev push supplies the required check for the dev-to-main PR; strict
+up-to-date protection remains enabled. Issues, Discussions, and wiki are disabled.
+
+The two failed runs on the initial gate-probe commit were intentional tests of
+branch protection, not application regressions. The probe was removed before
+v0.1.0, and subsequent CI and release checks passed.
+
+GitHub notifications are a separate personal setting. To silence this repository's
+activity, use its **Watch → Ignore** setting (including participation and mentions).
+Actions email preferences are under your account's **Settings → Notifications →
+System → Actions**; those preferences affect other repositories too. Security and
+account emails are separate from classroom activity notifications.

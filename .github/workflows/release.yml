@@ -1,0 +1,69 @@
+name: Classroom release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New release tag (for example v0.1.0)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: classroom-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require owner, main, and a semantic version
+        env:
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+          REF: ${{ github.ref }}
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          [[ "$ACTOR" == "$OWNER" && "$REF" == refs/heads/main ]]
+          [[ "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          # List refs through an authenticated request; fail on network/API errors.
+          refs=$(gh api "repos/$REPO/git/matching-refs/tags/$VERSION")
+          export REFS="$refs"
+          python3 - <<'PYCODE'
+          import json, os
+          assert not any(r['ref'] == 'refs/tags/' + os.environ['VERSION'] for r in json.loads(os.environ['REFS'])), 'Tag already exists'
+          PYCODE
+  checks:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+  release:
+    needs: [validate, checks]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Release the exact tested commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Classroom Docker and AGENTS.md demo.
+
+          Fork this repository, clone your fork, and follow the README to install
+          security hooks and start Docker Compose. Local Ollama works without an
+          account. Cloud mode requires your own ChatGPT device sign-in; no API key.
+
+          Checks cover builds, PostgreSQL integration, provider routing, secret
+          scanning, and mocked Codex adapter behavior. Actual cloud generation
+          requires per-user sign-in and is not exercised in CI.
+
+          Source archives contain code only. Model weights and account credentials
+          are not included. Use the README for prerequisites and troubleshooting.
+          NOTES
+          gh release create "$VERSION" --repo "$REPO" --target "$COMMIT" \
+            --title "$VERSION · Classroom demo" --notes-file "$RUNNER_TEMP/release-notes.md"

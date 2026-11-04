@@ -1,0 +1,20 @@
+.env
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# Runtime credentials and local authentication must never be published.
+.env.*
+!.env.example
+.codex/
+.aws/
+auth.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519

@@ -1,0 +1,89 @@
+name: CI
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --prefix frontend
+      - run: npm run build --prefix frontend
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: chat
+          POSTGRES_PASSWORD: classroom-demo
+          POSTGRES_DB: chat_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U chat -d chat_test"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+    env:
+      PGHOST: localhost
+      PGUSER: chat
+      PGPASSWORD: classroom-demo
+      PGDATABASE: chat_test
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt
+      - run: python -m unittest discover -s tests -v
+        working-directory: backend
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - run: docker compose config --quiet
+      - run: docker compose build frontend backend codex
+      - name: Test Codex adapter without account credentials
+        run: docker compose run --rm -T --no-deps codex python - < codex-service/tests/test_adapter.py
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: bash scripts/security-check.sh history
+      - run: python3 scripts/test_security_hooks.py
+  ci-success:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [frontend, backend, containers, security]
+    steps:
+      - name: Require every check to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          assert all(job['result'] == 'success' for job in results.values()), results
+          PYCODE

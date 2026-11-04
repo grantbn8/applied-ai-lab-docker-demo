@@ -1,0 +1,84 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    environment:
+      PGHOST: database
+      PGUSER: ${POSTGRES_USER:-chat}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-classroom-demo}
+      PGDATABASE: ${POSTGRES_DB:-chat}
+      CODEX_URL: ${CODEX_URL:-http://codex:8001}
+      OLLAMA_URL: http://model:11434
+      MODEL_NAME: ${MODEL_NAME:-gemma3:1b}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+      model-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  codex:
+    build: ./codex-service
+    volumes:
+      - codex-auth:/home/runner/.codex
+    tmpfs:
+      - /workspace:uid=10001,gid=10001,mode=0700
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-classroom-demo}
+      POSTGRES_DB: ${POSTGRES_DB:-chat}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  model:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - model-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  model-init:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://model:11434
+    entrypoint: ["/bin/ollama"]
+    command: ["pull", "${MODEL_NAME:-gemma3:1b}"]
+    depends_on:
+      model:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  model-data:
+  codex-auth:

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Deleting a ref does not upload content; protected refs cannot be deleted.
+  if [[ "$local_sha" != 0000000000000000000000000000000000000000 ]]; then
+    bash scripts/security-check.sh history "$local_sha"
+  fi
+done

@@ -53,3 +53,15 @@ Keep the code easy to read, explain, and modify.
 - Normal development goes to dev; main changes require a PR and passing ci-success.
 - Never force-push or delete main/dev, or bypass protection to resolve a failed check.
 - Promote dev to main with a merge commit; then fast-forward dev to main.
+
+
+## Classroom distribution and notifications
+- This upstream is for cloning/forking, not student submissions. Students push
+  and run Actions only in their own repositories.
+- Keep CI limited to main/dev pushes, authorized manual runs, and reusable calls.
+  Do not add pull_request, pull_request_target, issue, comment, fork, or scheduled
+  triggers without an explicit owner request.
+- Keep Issues, Discussions, and wiki disabled upstream. Do not add auto-comment,
+  mention, review-request, or student notification bots.
+- Do not create deliberate failing upstream CI runs for routine verification.
+  Test failure handling locally; historical gate probes already proved enforcement.

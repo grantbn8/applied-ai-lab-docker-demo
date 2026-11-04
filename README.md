@@ -325,3 +325,9 @@ immediately; merely deleting the current file is not sufficient.
 For isolated database integration tests, CI uses a disposable database whose name
 ends in `_test`. The tests deliberately refuse other database names and reset only
 that test database. Never point them at the database containing your class chats.
+
+## Classroom checkpoint
+
+The November 5, 2026 classroom starting point is release **v0.1.0**. Use its tag
+when you need the exact demonstrated version. Normal development continues on
+`dev`; tested changes reach `main` through a pull request.

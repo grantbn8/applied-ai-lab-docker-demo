@@ -164,37 +164,6 @@ sign-in credentials**, along with its containers and Compose network. The next
 signing in again. Source files and built images remain. Use the same Compose
 project name (`-p`, if you specified one) that you used to start the demo.
 
-### Delete all Docker Desktop containers and volumes
-
-This broader cleanup affects **every project on the selected Docker engine**, not
-just this demo. Back up any data you need first. Keep Docker Desktop running.
-Check `docker context show` and `docker context ls` to confirm you are targeting
-your local Docker Desktop engine, not a remote engine.
-
-In macOS Terminal (zsh/bash), Linux bash, or Windows **Git Bash**, run:
-
-```sh
-# Remove every running and stopped container on the selected engine.
-docker container ls -aq | while IFS= read -r container_id; do
-  docker container rm --force "$container_id" || exit 1
-done
-
-# Delete unused anonymous AND named local volumes; confirm when prompted.
-docker volume prune --all
-
-# Verify that no containers or volumes remain.
-docker container ls -a
-docker volume ls
-```
-
-Force-removing containers interrupts running applications. Removing their volumes
-permanently deletes stored databases and credentials for all affected projects.
-If a container cannot be removed, resolve that error before pruning; volumes still
-in use cannot be deleted. These commands retain images, build cache, and host
-files mounted into containers. They are shell commands, not PowerShell syntax.
-See Docker's [container removal](https://docs.docker.com/reference/cli/docker/container/rm/)
-and [volume pruning](https://docs.docker.com/reference/cli/docker/volume/prune/) documentation.
-
 ## Demonstrating AGENTS.md
 
 Ask an agent: “Add a conversation delete button. Follow AGENTS.md and update any
@@ -395,3 +364,11 @@ activity, use its **Watch → Ignore** setting (including participation and ment
 Actions email preferences are under your account's **Settings → Notifications →
 System → Actions**; those preferences affect other repositories too. Security and
 account emails are separate from classroom activity notifications.
+
+## Dependency vulnerability scanning
+
+CI audits frontend dependencies (including build tools) and both Python services.
+Known vulnerabilities or scanner failures block the required `ci-success` gate
+and release checks. See [VULNERABILITY_REMEDIATION.md](VULNERABILITY_REMEDIATION.md)
+for reproduction, remediation, verification, and coverage limitations. These
+dependency audits do not scan container OS packages or bundled model/CLI binaries.

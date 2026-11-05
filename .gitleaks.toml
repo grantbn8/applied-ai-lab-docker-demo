@@ -1,5 +1,5 @@
-title = "Classroom repository secret detection"
+title = "Demo repository secret detection"
 [extend]
 useDefault = true
-# No blanket exclusions. The literal classroom-demo database password is a
+# No blanket exclusions. The example database password is a
 # documented non-secret local default; .env.example and tests remain scanned.

@@ -11,5 +11,5 @@ The server has cloud features disabled. There is no hosted inference fallback.
 
 This demo defaults to CPU inference for portability. Docker Desktop on macOS does
 not provide Apple GPU acceleration to this Linux container; small models keep the
-classroom demonstration manageable. The first download needs internet access;
+demo demonstration manageable. The first download needs internet access;
 subsequent inference uses the downloaded weights locally.

@@ -1,4 +1,4 @@
-name: Classroom release
+name: Release
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: classroom-release
+  group: release
   cancel-in-progress: false
 jobs:
   validate:
@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
-          Classroom Docker and AGENTS.md demo.
+          Docker and AGENTS.md demonstration.
 
           Fork this repository, clone your fork, and follow the README to install
           security hooks and start Docker Compose. Local Ollama works without an
@@ -66,4 +66,4 @@ jobs:
           are not included. Use the README for prerequisites and troubleshooting.
           NOTES
           gh release create "$VERSION" --repo "$REPO" --target "$COMMIT" \
-            --title "$VERSION · Classroom demo" --notes-file "$RUNNER_TEMP/release-notes.md"
+            --title "$VERSION · Demo" --notes-file "$RUNNER_TEMP/release-notes.md"

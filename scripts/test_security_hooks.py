@@ -17,7 +17,7 @@ def run(repo, *args, ok=True, env=None):
     return result
 
 
-with tempfile.TemporaryDirectory(prefix='classroom-hook-test-') as directory:
+with tempfile.TemporaryDirectory(prefix='demo-hook-test-') as directory:
     repo = Path(directory) / 'work'
     repo.mkdir()
     remote = Path(directory) / 'remote.git'
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix='classroom-hook-test-') as directory:
     denied = run(repo, 'git', 'commit', '-m', 'Forbidden path', ok=False)
     assert 'Blocked credential/data path' in denied.stderr
     run(repo, 'git', 'reset', '--', 'auth.json')
-    (repo / 'clean.txt').write_text('Clean classroom content\n')
+    (repo / 'clean.txt').write_text('Clean demo content\n')
     run(repo, 'git', 'add', 'clean.txt')
     fake_bin = Path(directory) / 'bin'
     fake_bin.mkdir()

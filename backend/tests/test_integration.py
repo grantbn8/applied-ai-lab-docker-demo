@@ -13,7 +13,7 @@ from app.main import app
 class DatabaseIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Refuse accidental execution against the classroom's normal database.
+        # Refuse accidental execution against the demo's normal database.
         import os
         if not os.environ.get('PGDATABASE', '').endswith('_test'):
             raise RuntimeError('Integration tests require a database ending in _test')

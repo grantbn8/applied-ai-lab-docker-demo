@@ -65,3 +65,8 @@ Keep the code easy to read, explain, and modify.
   mention, review-request, or student notification bots.
 - Do not create deliberate failing upstream CI runs for routine verification.
   Test failure handling locally; historical gate probes already proved enforcement.
+
+## Vulnerability remediation
+- Follow [VULNERABILITY_REMEDIATION.md](VULNERABILITY_REMEDIATION.md) for dependency findings.
+- Keep vulnerability audits required by ci-success; never suppress findings or scanner failures to merge.
+- Cleanup documentation and commands must target this Compose project only; never document or run Docker-wide deletion for this project.
